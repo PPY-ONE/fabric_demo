@@ -1,28 +1,35 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <v-app>
+   <bar @sendClickType = "getClickType" @sendColor = "getColor"></bar>
+   <paint :barClickType = "clickType" :selectedColor = "color"></paint>
+  </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import bar from './components/bar'
+import paint from './components/paint/paint'
 
 export default {
-  name: 'app',
+  name: 'App',
+  methods: {
+    getClickType (type) {
+      this.clickType = type
+      // console.log(this.clickType)
+    },
+    getColor (color, clickType) {
+      this.color = color
+      this.clickType = clickType
+      // console.log(clickType)
+    }
+  },
   components: {
-    HelloWorld
-  }
+    bar,
+    paint
+  },
+
+  data: () => ({
+    clickType: '',
+    color: ''
+  })
 }
 </script>
-
-<style lang="less">
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
