@@ -1,62 +1,81 @@
 import { makeCircle, makeLine } from './line'
+import { fabric } from 'fabric'
 
 let startX, startY, endX, endY
 
 // canvas 对象
 let c = null
-let temLine = null 
+let temLine = undefined
 // 长度文本设置  让它开始时不显示
 let lenText = 0
 let startCircle = null
 let endCircle = null
+let positionText = null
 
 let color = '#fff'
 // 鼠标移入时的 线 原本的颜色
 let originColor
 
 export function mouseDown (options, type, canvas) {
+  c = canvas
   if (type === 'line' || type === 'changeColor') {
-    c = canvas
     drawLineMouseDown(options, type, canvas)
   }
 }
 
 export function mouseMove (options, type, canvas) {
-  if(type === 'line' || type === 'changeColor') {
+  if (type === 'line' || type === 'changeColor') {
     drawLineMouseMove (options, canvas)
   }
+  showMovePosition (options, canvas)
 }
 
-export function mouseUp (options, type) {
-  if(type === 'line' || type === 'changeColor') {
-    drawLineMouseUp(options)
+export function mouseUp (options, type, canvas) {
+  if (type === 'line' || type === 'changeColor') {
+    drawLineMouseUp(options, canvas)
   }
 }
 
-export function ObjMoving (e) { 
-  // console.log('objMoving')
-  let p = e.target
-  p.line1 && p.line1.set({ 'x2': p.left, 'y2': p.top })
-  p.line2 && p.line2.set({ 'x1': p.left, 'y1': p.top })
-  
-  let x1 = p.left
-  let y1 = p.top
-  let x2 = p.line3.left
-  let y2 = p.line3.top
-  let coords = [x1, y1, x2, y2]
-  let length = getLength(coords)
-  p.line4 && p.line4.set({
-    'left': p.left,
-    'top': p.top,
-    'text': '长度：' + length
-  })
-  c.renderAll()
+export function ObjMoving (e, type) {
+  if (type === 'select') {
+    let targetLine
+    let modifyLine
+    let anotherCircle
+
+    let p = e.target
+    p.line1 && p.line1.set({ 'x2': p.left, 'y2': p.top })
+    p.line2 && p.line2.set({ 'x1': p.left, 'y1': p.top })
+
+    if (p.line1) targetLine = p.line1
+    if (p.line2) targetLine = p.line2
+    if (p.line3) anotherCircle = p.line3
+    if (p.line4) anotherCircle = p.line4
+
+    modifyLine = Object.assign(targetLine, modifyLine)
+    console.log(modifyLine)
+
+    let x1 = p.left
+    let y1 = p.top
+    let x2 = anotherCircle.left
+    let y2 = anotherCircle.top
+    let coords = [x1, y1, x2, y2]
+    let length = getLength(coords)
+    p.line5 && p.line5.set({
+      'left': p.left + 12,
+      'top': p.top + 12,
+      'text': '长度：' + length
+    })
+    c.remove(targetLine)
+    c.add(modifyLine)
+
+    c.renderAll()
+  }
 }
 
 export function mouseOver (e, type) {
   let target = e.target
   if (type === 'select') {
-    selectHoverHandler(target, '1')
+    selectHoverHandler(target, '1', type)
   }
   if (type === 'delete') {
     deleteHoverHandler(target, 'over')
@@ -65,7 +84,7 @@ export function mouseOver (e, type) {
 export function mouseOut (e, type) {
   let target = e.target
   if (type === 'select') {
-    selectHoverHandler(target, '0')
+    selectHoverHandler(target, '0', type)
   }
   if (type === 'delete') {
     deleteHoverHandler(target, 'out')
@@ -73,27 +92,46 @@ export function mouseOut (e, type) {
 }
 
 export function handleObjSelect (e, type) {
-  if (type === 'delete') {
-    let delObj = e.target
-    c.remove(delObj)
+  let delObj = e.target
+  if (type === 'delete' && delObj.name !== 'controlCircle') {
+    c.remove(delObj, delObj.lConCircle, delObj.rConCircle, delObj.flenText)
   }
 }
 
+// 显示鼠标的坐标值
+function showMovePosition (options, canvas) {
+  canvas.remove(positionText)
+  let e = options.e
+  let x = e.offsetX
+  let y = e.offsetY
+  positionText = new fabric.Text(`x:${x},y:${y}`, {
+    top: 0,
+    left: 0,
+    fontSize: 10,
+    originX: 'left',
+    originY: 'top',
+    backgroundColor: '#fff',
+    fontFamily: 'Arial',
+    selectable: false,
+    hasBorders: false
+  })
+  canvas.add(positionText)
+}
+
 // 选择时鼠标移入移出事件
-function selectHoverHandler (target, opaVal) {
+function selectHoverHandler (target, opaVal, type) {
   if (target) {
-    if (target.name === 'line') {
-      target.set({
-        evented: false
-      })
-    } else {
+    if (target.name === 'controlCircle') {
+      let anotherCircle
+      if (target.line3) anotherCircle = target.line3
+      if (target.line4) anotherCircle = target.line4
       target.set({
         selectable: true
       })
       setOpacity(target, opaVal, c)
-      if (target.line3 && target.line4) {
-        setOpacity(target.line3, opaVal, c)
-        setOpacity(target.line4, opaVal, c)
+      if (anotherCircle && target.line5) {
+        setOpacity(anotherCircle, opaVal, c)
+        setOpacity(target.line5, opaVal, c)
       }
       c.renderAll()
     }
@@ -125,7 +163,7 @@ function drawLineMouseDown (options, type, canvas) {
   // console.log('鼠标点击时得到的color--- ' + color)
   startX = options.e.offsetX
   startY = options.e.offsetY
-  canvas.on('mouse:move', options => mouseMove(options, type, canvas))
+  // canvas.on('mouse:move', options => mouseMove(options, type, canvas))
 }
 
 // 画线的鼠标移动事件
@@ -161,14 +199,15 @@ function drawLineMouseMove (options, canvas) {
 }
 
 // 画线的鼠标松开事件
-function drawLineMouseUp () {
+function drawLineMouseUp (options, canvas) {
   if (!endX && !endY) {
     c.remove(temLine)
   }
-  c.off('mouse:move')
+  // c.off('mouse:move')
   c.remove(temLine, lenText, startCircle, endCircle)
+  temLine = undefined
   let coords = [startX, startY, endX, endY]
-  let line = makeLine(coords, color)
+  let line = makeLine(coords, color, null, null, null)
   let length = getLength(coords)
   let text = new fabric.Text('长度：' + length, {
     top: endY + 12,
@@ -178,19 +217,21 @@ function drawLineMouseUp () {
     fill: '#fff',
     selectable: false,
     evented: false
-  }) 
+  })
   // 开始点的小球
-  let fStartCircle = makeCircle(startX, startY, null, line, null, text)
+  // let fStartCircle = makeCircle(startX, startY, null, line, null, text)
+  let fStartCircle = makeCircle(startX, startY, null, line, null, null, text)
   // 终点坐标的小球
-  let fEndCircle = makeCircle(endX, endY, line, null, fStartCircle, text)
-  fStartCircle.line3 = fEndCircle
+  let fEndCircle = makeCircle(endX, endY, line, null, fStartCircle, null, text)
+  fStartCircle.line4 = fEndCircle
+  line.lConCircle = fStartCircle
+  line.rConCircle = fEndCircle
+  line.flenText = text
   c.add(line, text, fStartCircle, fEndCircle)
   setOpacity(text, '0', c)
   setOpacity(fStartCircle, '0', c)
   setOpacity(fEndCircle, 0, c)
-  // 如果只是点击则让线连接上 上次的线的终点
-  endY = startY
-  endX = startX
+  endY = startY = endX = startX = undefined
 }
 
 // 获得长度
@@ -201,7 +242,6 @@ function getLength (coords) {
     endX,
     endY
   ] = coords
-  
   let w = startX - endX
   let h = startY - endY
   let length = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2))

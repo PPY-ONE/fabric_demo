@@ -47,7 +47,7 @@ export default {
         'mouse:down': options => mouseDown(options, that.barClickType, that.canvas),
         'mouse:move': options => mouseMove(options, that.barClickType, that.canvas),
         'mouse:up': options => mouseUp(options, that.barClickType, that.canvas),
-        'object:moving': e => ObjMoving(e),
+        'object:moving': e => ObjMoving(e, that.barClickType),
         'mouse:over': e => mouseOver(e, that.barClickType),
         'mouse:out': e => mouseOut(e, that.barClickType),
         'selection:created': e => handleObjSelect(e, that.barClickType),

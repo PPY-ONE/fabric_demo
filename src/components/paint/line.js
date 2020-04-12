@@ -1,7 +1,7 @@
 import { fabric } from 'fabric'
 
-export function makeLine (coords, strokeColor) {
-  return new fabric.Line(coords, {
+export function makeLine (coords, strokeColor, lConCircle, rConCircle, flenText) {
+  let line = new fabric.Line(coords, {
     stroke: strokeColor,
     strokeWidth: 1,
     selectable: false,
@@ -10,9 +10,15 @@ export function makeLine (coords, strokeColor) {
     hasControls: false,
     name: 'line'
   })
+
+  line.lConCircle = lConCircle
+  line.rConCircle = rConCircle
+  line.flenText = flenText
+
+  return line
 }
 
-export function makeCircle (left, top, line1, line2, line3, line4) {
+export function makeCircle (left, top, line1, line2, line3, line4, line5) {
   var c = new fabric.Circle({
     left: left,
     top: top,
@@ -26,9 +32,11 @@ export function makeCircle (left, top, line1, line2, line3, line4) {
   // line1 line2 是控制线的两端的
   c.line1 = line1
   c.line2 = line2
-  // line3保存另一端的小球
+  // line3保存左侧小球 line4保存右侧小球
   c.line3 = line3
-  // line4保存长度文本框
   c.line4 = line4
+  // line5保存长度文本框
+  c.line5 = line5
+  c.name = 'controlCircle'
   return c
 }
