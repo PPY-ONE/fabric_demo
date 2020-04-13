@@ -1,5 +1,9 @@
 import { makeCircle, makeLine } from './line'
 import { fabric } from 'fabric'
+import {
+  bezierMouseDown,
+  bezierMouseMove
+} from './bezier/bezierEvent'
 
 let startX, startY, endX, endY
 
@@ -21,13 +25,19 @@ export function mouseDown (options, type, canvas) {
   if (type === 'line' || type === 'changeColor') {
     drawLineMouseDown(options, type, canvas)
   }
+  if (type === 'bezier') {
+    bezierMouseDown(options, canvas)
+  }
 }
 
 export function mouseMove (options, type, canvas) {
+  showMovePosition (options, canvas)
   if (type === 'line' || type === 'changeColor') {
     drawLineMouseMove (options, canvas)
   }
-  showMovePosition (options, canvas)
+  if (type === 'bezier') {
+    bezierMouseMove(options, canvas)
+  }
 }
 
 export function mouseUp (options, type, canvas) {

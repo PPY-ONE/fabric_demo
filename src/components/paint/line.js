@@ -23,7 +23,7 @@ export function makeCircle (left, top, line1, line2, line3, line4, line5) {
     left: left,
     top: top,
     strokeWidth: 1,
-    radius: 6,
+    radius: 4,
     fill: '#fff',
     stroke: '#666',
     selectable: false

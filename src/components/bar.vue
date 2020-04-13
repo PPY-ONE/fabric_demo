@@ -2,6 +2,7 @@
   <v-app-bar app>
     <div class="btnContainer">
       <v-btn class="barBtn" @click="barBtnClick('line')" color="#333">line</v-btn>
+      <v-btn class="barBtn" @click="barBtnClick('bezier')" color="#999">bezier</v-btn>
       <v-btn class="barBtn" @click="barBtnClick('select')" color="#666">select</v-btn>
       <v-btn class="barBtn" @click="barBtnClick('delete')" color="#f00">delete</v-btn>
       <!-- 颜色选择按钮 -->
