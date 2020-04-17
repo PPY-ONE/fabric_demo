@@ -1,48 +1,57 @@
-import { makeCircle, makeLine } from './line'
-import { fabric } from 'fabric'
+import { makeCircle, makeLine } from './line';
+import { fabric } from 'fabric';
 import {
   bezierMouseDown,
-  bezierMouseMove
-} from './bezier/bezierEvent'
+  bezierMouseMove,
+  bezierMouseUp,
+  bezierMouseOver,
+  bezierMouseOut,
+  moveControlPoint
+} from './bezier/bezierEvent';
+import { getLength, setOpacity } from './tools';
 
-let startX, startY, endX, endY
+let startX, startY, endX, endY;
 
 // canvas 对象
-let c = null
-let temLine = undefined
+let c = null;
+let temLine = undefined;
 // 长度文本设置  让它开始时不显示
-let lenText = 0
-let startCircle = null
-let endCircle = null
-let positionText = null
+let lenText = 0;
+let startCircle = null;
+let endCircle = null;
+let positionText = null;
 
-let color = '#fff'
+let color = '#fff';
 // 鼠标移入时的 线 原本的颜色
-let originColor
+let originColor;
+let isAlt = false;
 
 export function mouseDown (options, type, canvas) {
-  c = canvas
+  c = canvas;
   if (type === 'line' || type === 'changeColor') {
-    drawLineMouseDown(options, type, canvas)
+    drawLineMouseDown(options, type, canvas);
   }
   if (type === 'bezier') {
-    bezierMouseDown(options, canvas)
+    bezierMouseDown(options, color, canvas);
   }
 }
 
 export function mouseMove (options, type, canvas) {
-  showMovePosition (options, canvas)
+  showMovePosition (options, canvas);
   if (type === 'line' || type === 'changeColor') {
-    drawLineMouseMove (options, canvas)
+    drawLineMouseMove (options, canvas);
   }
   if (type === 'bezier') {
-    bezierMouseMove(options, canvas)
+    bezierMouseMove(options, color, canvas);
   }
 }
 
 export function mouseUp (options, type, canvas) {
   if (type === 'line' || type === 'changeColor') {
-    drawLineMouseUp(options, canvas)
+    drawLineMouseUp(options, canvas);
+  }
+  if (type === 'bezier') {
+    bezierMouseUp(options, color, canvas);
   }
 }
 
@@ -80,6 +89,9 @@ export function ObjMoving (e, type) {
 
     c.renderAll()
   }
+  if (type === 'bezier') {
+    moveControlPoint(e);
+  }
 }
 
 export function mouseOver (e, type) {
@@ -90,6 +102,9 @@ export function mouseOver (e, type) {
   if (type === 'delete') {
     deleteHoverHandler(target, 'over')
   }
+  if (type === 'bezier') {
+    bezierMouseOver(target)
+  }
 }
 export function mouseOut (e, type) {
   let target = e.target
@@ -98,6 +113,9 @@ export function mouseOut (e, type) {
   }
   if (type === 'delete') {
     deleteHoverHandler(target, 'out')
+  }
+  if (type === 'bezier') {
+    bezierMouseOut(target)
   }
 }
 
@@ -244,19 +262,6 @@ function drawLineMouseUp (options, canvas) {
   endY = startY = endX = startX = undefined
 }
 
-// 获得长度
-function getLength (coords) {
-  let [
-    startX,
-    startY,
-    endX,
-    endY
-  ] = coords
-  let w = startX - endX
-  let h = startY - endY
-  let length = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2))
-  return length
-}
 // 获得颜色
 export function getColor (newColor) {
   // console.log('get color得到的---' + newColor)
@@ -264,12 +269,4 @@ export function getColor (newColor) {
     color = 'white'
   }
   color = newColor
-}
-
-// 设置透明度
-function setOpacity (obj, val, canvas) {
-  obj.animate('opacity', val, {
-    duration: 200,
-    onChange: canvas.renderAll.bind(canvas)
-  })
 }

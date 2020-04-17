@@ -23,7 +23,8 @@ import {
 export default {
   data () {
     return {
-      canvas: null
+      canvas: null,
+      objArr: []
     }
   },
   props: {
@@ -38,8 +39,15 @@ export default {
     initFabric () {
       this.setCanvasSize()
       window.onresize = () => {
+        this.canvas.forEachObject(obj => {
+          this.objArr.push(obj);
+        })
         this.setCanvasSize()
-        this.canvas.renderAll()
+        // TODO: resize重复画图
+        this.objArr.forEach(obj => {
+          this.canvas.add(obj);
+        })
+        this.canvas.renderAll();
       }
       let that = this
       fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center'
@@ -67,7 +75,7 @@ export default {
         width: w,
         height: h,
         selection: false,
-        backgroundColor: '#333'
+        backgroundColor: '#555'
       })
       this.canvas = canvas
     }
