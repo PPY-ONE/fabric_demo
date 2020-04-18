@@ -71,7 +71,6 @@ export function ObjMoving (e, type) {
     if (p.line4) anotherCircle = p.line4
 
     modifyLine = Object.assign(targetLine, modifyLine)
-    console.log(modifyLine)
 
     let x1 = p.left
     let y1 = p.top

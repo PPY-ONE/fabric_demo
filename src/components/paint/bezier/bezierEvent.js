@@ -16,19 +16,16 @@ let temAnchor;
 let temPath;
 let temBezier;
 let singleBezierArr = []; // 存放每一次生成的三阶贝兹曲线的数组
-let isEsc = false;
 let isAlt = false;
 let isMoving = false;
 let isAnMove = false;
 let controlL; // 同一个锚点的两个控制点连成的线
 let visiableArr = []; // 鼠标移入时显示的对象数组
 let visiableAnchor = []; // 鼠标移入时变色的锚点数组
-let noEventAn = [];
+let noEventAn = []; // 没有按下alt时让锚点不能进行编辑
 
 export function bezierMouseDown (options, color, canvas) {
   if (isMoving || isAlt || isAnMove) return;
-  // console.log(options);
-  isEsc = false;
   c = canvas;
   window.c = c;
   if (temBezier) canvas.add(temBezier);
@@ -49,8 +46,10 @@ export function bezierMouseDown (options, color, canvas) {
 }
 
 export function bezierMouseMove (options, color, canvas) {
-  // 如果是退出状态 锚点移动 控制点移动状态 则退出
-  if (isEsc || isMoving || isAnMove || isAlt) return;
+  // 如果是锚点移动 控制点移动状态 则退出
+  if (isMoving || isAnMove) return;
+  if (options.e.altKey) {
+  }
   c = canvas;
   isMouseMove = true;
   // 如果只有一个锚点 退出
@@ -125,6 +124,7 @@ export function bezierMouseMove (options, color, canvas) {
 export function bezierMouseUp (options, color, canvas) {
   if (isMoving || isAnMove) {
     isAnMove = false;
+    isMoving = false;
     return;
   }
   c = canvas;
@@ -144,7 +144,9 @@ export function bezierMouseUp (options, color, canvas) {
 }
 export function bezierMouseOver (target) {
   // if (target) console.log(target.name);
-  if (!isAlt && target && target.name === 'anchor') {
+  if (!isAlt && target && target.id && target.name === 'anchor') {
+    // 实际上 这里处理的是第一个锚点 没有被skipTargetFind的问题
+    // 数组中只有第一个锚点
     target.set({
       selectable: false,
       evented: false
@@ -154,6 +156,7 @@ export function bezierMouseOver (target) {
   if (isAlt) {
     if (target && target.name === 'anchor') {
       isAnMove = true;
+      isMoving = true;
       target.set({
         stroke: '#efcc73',
         fill: '#efcc73'
@@ -171,13 +174,13 @@ export function bezierMouseOver (target) {
           modBezier = bezier;
           return true;
         }
-      })
+      });
       modBezier.anchorArr.some((anchor, i) => {
         if (anchor.id === target.id) {
           modIndex = i;
           return true;
         }
-      })
+      });
       if (modIndex === modBezier.anchorArr.length - 1) {
         // 处理最后一个锚点
         target.nextConP.set({
@@ -231,28 +234,21 @@ function isAltArrVisiable () {
     });
   }
 }
-export function bezierMouseOut (target) {
-}
 // 物件移动处理函数
 let isFirst = 1;
 let clonePre = {};
 let cloneNext = {};
-let selectedAnId = '';
+// 调整锚点和控制点的函数
 export function moveControlPoint (e) {
   let target = e.target;
   if (target.name === 'prePoint' || target.name === 'nextPoint') {
+    // if (!isMoving) return;
     isMoving = true;
     controlPointHandle(e);
   }
   if (target.name === 'anchor') {
     if (!isAnMove) return;
     isAnMove = true;
-    if (selectedAnId !== target.id) {
-      cloneNext = {};
-      clonePre = {};
-      selectedAnId = target.id;
-      isFirst = 1;
-    }
     if (isFirst === 1) {
       isFirst++;
       clonePre.x = e.target.preConP.left;
@@ -261,6 +257,14 @@ export function moveControlPoint (e) {
       cloneNext.y = e.target.nextConP.top;
     }
     anchorMovingHandle(e, clonePre, cloneNext);
+  }
+}
+// 重置初始值
+export function bezierMouseOut (target) {
+  if (target && target.name === 'anchor') {
+    clonePre = {};
+    cloneNext = {};
+    isFirst = 1;
   }
 }
 // 监听键盘事件
@@ -302,22 +306,32 @@ window.onblur = function () {
   isAlt = false;
   isAltArrVisiable();
 }
-// ESC处理函数
+// ESC处理函数 重置所有状态
 function escHandler () {
   if (anchorArr.length < 2) return;
   isAnMove = false;
-  isEsc = true;
+  isMoving = false;
   isAlt = false;
+  isMouseMove = false;
+  isMouseDown = false;
+  currentP = {};
+  cAnchor = undefined;
+  preAnNextConp = undefined;
+  preAnpreConp = undefined;
   c.remove(temAnchor, temPath);
+  temAnchor = undefined;
   temPath = undefined;
   temBezier = undefined;
+  controlL = undefined;
+  visiableAnchor = [];
+  visiableArr = [];
   // 整条贝兹曲线的id
   bezierObj.id = bezierArr.length + 1;
   // 为每个锚点绑定所在整条贝兹曲线的id
   anchorArr.forEach(obj => {
     obj.bezierId = bezierObj.id;
   });
-  // 将锚点数组存放到整条贝兹曲线对象上
+  // 将锚点数 组存放到整条贝兹曲线对象上
   bezierObj.anchorArr = anchorArr;
   // 将单个贝兹曲线的数组放入整条贝兹曲线的对象上
   bezierObj.singleBezierArr = singleBezierArr; 
@@ -326,8 +340,9 @@ function escHandler () {
   bezierObj = {};
   anchorArr = [];
 }
-// 调整控制点时 的处理函数
+// 调整 控制点 的处理函数
 function controlPointHandle (e) {
+  // 先调整锚点 不松开alt 继续调整控制点 这里是不触发的
   let target = e.target;
   let currentX = e.e.offsetX;
   let currentY = e.e.offsetY;
@@ -380,12 +395,8 @@ function controlPointHandle (e) {
     x2: anotherCP.left,
     y2: anotherCP.top
   });
-  // TODO: 另一个控制点的位置更新并不及时 虽然显示的位置变了
-  // 但是还是要在原来的位置才可以选中 （renderAll并没有效果）
-  // 可以使用之前画直线的方式 拷贝一份重画 但是感觉并不是最优解
-  // 这里直接在调整完后让它消失 但是这样 用户体验并不好
-  isAlt = false;
-  isAltArrVisiable();
+  let newAnotherCP =Object.assign(anotherCP, {});
+  c.remove(anotherCP).add(newAnotherCP);
   // 更新贝兹曲线
   bezierArr.some(bezier => {
     if (bezier.id === anchor.bezierId) {
@@ -405,91 +416,66 @@ function controlPointHandle (e) {
   // 移动最后一个锚点的控制点时
   if (modAnIndex === modBezier.anchorArr.length - 1) {
     if (target.name === 'prePoint') {
-      preBezier.set({
-        path: [[
-          'M',
-          preAn.left,
-          preAn.top
-        ], [
-          'C',
-          preAn.nextConP.left,
-          preAn.nextConP.top,
-          target.left,
-          target.top,
-          anchor.left,
-          anchor.top
-        ]]
-      });
+      let newPreBezier = new fabric.Path(`M ${preAn.left} ${preAn.top} C ${preAn.nextConP.left}, ${preAn.nextConP.top}, ${target.left}, ${target.top}, ${anchor.left}, ${anchor.top}`, {
+        fill: '',
+        stroke: '#fff',
+        hasBorders: false,
+        hasControls: false,
+        selectable: false,
+        evented: false
+      })
+      c.remove(preBezier);
+      c.add(newPreBezier);
+      modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
     }
     if (target.name === 'nextPoint') return;
     return;
   }
   if (target.name === 'prePoint') {
-    preBezier.set({
-      path: [[
-        'M',
-        preAn.left,
-        preAn.top
-      ], [
-        'C',
-        preAn.nextConP.left,
-        preAn.nextConP.top,
-        target.left,
-        target.top,
-        anchor.left,
-        anchor.top
-      ]]
-    });
-    nextBezier.set({
-      path: [[
-        'M',
-        anchor.left,
-        anchor.top
-      ], [
-        'C',
-        anotherCP.left,
-        anotherCP.top,
-        nextAn.preConP.left,
-        nextAn.preConP.top,
-        nextAn.left,
-        nextAn.top
-      ]]
-    });
+    let newPreBezier = new fabric.Path(`M ${preAn.left} ${preAn.top} C ${preAn.nextConP.left}, ${preAn.nextConP.top}, ${target.left}, ${target.top}, ${anchor.left}, ${anchor.top}`, {
+      fill: '',
+      stroke: '#fff',
+      hasBorders: false,
+      hasControls: false,
+      selectable: false,
+      evented: false
+    })
+    let newNextBezier = new fabric.Path(`M ${anchor.left} ${anchor.top} C ${anotherCP.left}, ${anotherCP.top}, ${nextAn.preConP.left}, ${nextAn.preConP.top}, ${nextAn.left}, ${nextAn.top}`, {
+      fill: '',
+      stroke: '#fff',
+      hasBorders: false,
+      hasControls: false,
+      selectable: false,
+      evented: false
+    })
+    c.remove(preBezier, nextBezier);
+    c.add(newNextBezier, newPreBezier);
+    modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
+    modBezier.singleBezierArr[modAnIndex] = newNextBezier;
   } else if (target.name === 'nextPoint') {
-    preBezier.set({
-      path: [[
-        'M',
-        preAn.left,
-        preAn.top
-      ], [
-        'C',
-        preAn.nextConP.left,
-        preAn.nextConP.top,
-        anotherCP.left,
-        anotherCP.top,
-        anchor.left,
-        anchor.top
-      ]]
-    });
-    nextBezier.set({
-      path: [[
-        'M',
-        anchor.left,
-        anchor.top
-      ], [
-        'C',
-        target.left,
-        target.top,
-        nextAn.preConP.left,
-        nextAn.preConP.top,
-        nextAn.left,
-        nextAn.top
-      ]]
-    });
+    let newPreBezier = new fabric.Path(`M ${preAn.left} ${preAn.top} C ${preAn.nextConP.left}, ${preAn.nextConP.top}, ${anotherCP.left}, ${anotherCP.top}, ${anchor.left}, ${anchor.top}`, {
+      fill: '',
+      stroke: '#fff',
+      hasBorders: false,
+      hasControls: false,
+      selectable: false,
+      evented: false
+    })
+    let newNextBezier = new fabric.Path(`M ${anchor.left} ${anchor.top} C ${target.left}, ${target.top}, ${nextAn.preConP.left}, ${nextAn.preConP.top}, ${nextAn.left}, ${nextAn.top}`, {
+      fill: '',
+      stroke: '#fff',
+      hasBorders: false,
+      hasControls: false,
+      selectable: false,
+      evented: false
+    })
+    c.remove(preBezier, nextBezier);
+    c.add(newNextBezier, newPreBezier);
+    modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
+    modBezier.singleBezierArr[modAnIndex] = newNextBezier;
   }
 }
-
-// 调整锚点时 的处理函数
+// 调整 锚点 的处理函数
 function anchorMovingHandle (e, clonePre, cloneNext) {
   // console.log(clonePre);
   let target = e.target;
@@ -500,9 +486,6 @@ function anchorMovingHandle (e, clonePre, cloneNext) {
   let originPreH = clonePre.y - originY;
   let originNextW = cloneNext.x - originX;
   let originNextH = cloneNext.y - originY;
-  // console.log(target.nextConP.left, target.nextConP.top);
-  // console.log(originPreW, originPreH, originNextW, originNextH);
-  // console.log(target.left, target.top);
   target.preConP.set({
     left: target.left + originPreW,
     top: target.top + originPreH
@@ -511,6 +494,11 @@ function anchorMovingHandle (e, clonePre, cloneNext) {
     left: target.left + originNextW,
     top: target.top + originNextH
   });
+  let newPreCP = Object.assign(target.preConP, {});
+  let newNextCP = Object.assign(target.nextConP, {});
+  c.remove(target.preConP, target.nextConP).add(newPreCP, newNextCP);
+  target.nextConP = newNextCP;
+  target.preConP = newPreCP;
   // console.log(prePX, target.preConP.left);
   if (target.conLine) {
     target.conLine.set({
@@ -540,21 +528,18 @@ function anchorMovingHandle (e, clonePre, cloneNext) {
   let nextBezier = modBezier.singleBezierArr[modAnIndex];
   // 如果是移动第一个锚点
   if (modAnIndex === 0) {
-    nextBezier.set({
-      path: [[
-        'M',
-        target.left,
-        target.top
-      ], [
-        'C',
-        target.nextConP.left,
-        target.nextConP.top,
-        nextAn.preConP.left,
-        nextAn.preConP.top,
-        nextAn.left,
-        nextAn.top
-      ]]
-    });
+    let newNextBezier = new fabric.Path(`M ${target.left} ${target.top} C ${target.nextConP.left}, ${target.nextConP.top}, ${nextAn.preConP.left}, ${nextAn.preConP.top}, ${nextAn.left}, ${nextAn.top}`, {
+      stroke: '#fff',
+      fill: '',
+      hasBorders: false,
+      hasControls: false,
+      selectable: false,
+      evented: false
+    })
+    // TODO: 注意 这里把第一个锚点的 控制点 remove了
+    c.remove(target.nextConP, target.preConP, nextBezier);
+    c.add(newNextBezier);
+    modBezier.singleBezierArr[modAnIndex] = newNextBezier;
     return;
   }
   // 如果是移动最后一个锚点
@@ -570,54 +555,40 @@ function anchorMovingHandle (e, clonePre, cloneNext) {
       x2: target.nextConP.left,
       y2: target.nextConP.top
     });
-    preBezier.set({
-      path: [[
-        'M',
-        preAn.left,
-        preAn.top
-      ], [
-        'C',
-        preAn.nextConP.left,
-        preAn.nextConP.top,
-        target.preConP.left,
-        target.preConP.top,
-        target.left,
-        target.top
-      ]]
+    let newPreBezier = new fabric.Path(`M ${preAn.left} ${preAn.top} C ${preAn.nextConP.left}, ${preAn.nextConP.top}, ${target.preConP.left}, ${target.preConP.top}, ${target.left}, ${target.top}`, {
+      stroke: '#fff',
+      fill: '',
+      hasBorders: false,
+      hasControls: false,
+      selectable: false,
+      evented: false
     });
+    c.remove(preBezier);
+    c.add(newPreBezier);
+    modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
     return;
   }
-  preBezier.set({
-    path: [[
-      'M',
-      preAn.left,
-      preAn.top
-    ], [
-      'C',
-      preAn.nextConP.left,
-      preAn.nextConP.top,
-      target.preConP.left,
-      target.preConP.top,
-      target.left,
-      target.top
-    ]]
+  let newPreBezier = new fabric.Path(`M ${preAn.left} ${preAn.top} C ${preAn.nextConP.left}, ${preAn.nextConP.top}, ${target.preConP.left}, ${target.preConP.top}, ${target.left}, ${target.top}`, {
+    stroke: '#fff',
+    fill: '',
+    hasBorders: false,
+    hasControls: false,
+    selectable: false,
+    evented: false
   });
-  nextBezier.set({
-    path: [[
-      'M',
-      target.left,
-      target.top
-    ], [
-      'C',
-      target.nextConP.left,
-      target.nextConP.top,
-      nextAn.preConP.left,
-      nextAn.preConP.top,
-      nextAn.left,
-      nextAn.top
-    ]]
-  });
-  // TODO: 和调整控制点时的情况一样
-  isAlt = false;
-  isAltArrVisiable();
+  let newNextBezier = new fabric.Path(`M ${target.left} ${target.top} C ${target.nextConP.left}, ${target.nextConP.top}, ${nextAn.preConP.left}, ${nextAn.preConP.top}, ${nextAn.left}, ${nextAn.top}`, {
+    stroke: '#fff',
+    fill: '',
+    hasBorders: false,
+    hasControls: false,
+    selectable: false,
+    evented: false
+  })
+  c.remove(preBezier, nextBezier);
+  c.add(newNextBezier, newPreBezier);
+  modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
+  modBezier.singleBezierArr[modAnIndex] = newNextBezier;
 }
+// TODO: 调整控制点和锚点的时候 不连续 会断开
+// 这里把前后的两条贝兹曲线重画来解决。 感觉并不是最优解
+// 可能是hasborder 的 影响 但是 hasborder已经设置为false了。
