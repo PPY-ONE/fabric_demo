@@ -18,10 +18,12 @@
 // 实际写下来 好像不行
 
 // import { fabric } from 'fabric';
+import { makeDetectCircle } from './detectObj';
 let objArr = []; //存放贝兹曲线的数组
 let num = 100; // 每条贝兹曲线上的点的个数
 let pointArr = []; // 存放贝兹曲线上的点的数组
-let range = 5;
+let range = 10;
+let detectC;
 export function getBezierData (bezierArr) {
   objArr = bezierArr;
   // 获取贝兹曲线的数据 并取得坐标信息存进数组
@@ -41,25 +43,7 @@ export function getBezierData (bezierArr) {
         pointArr.push(pointObj);
       }
     })
-  });
-  // 在每条曲线的同样位置画一条一样的曲线让它的strokeWidth为 2 * 误差值 ？
-  // 这个方法不行
-  // objArr.forEach(obj => {
-  //   obj.singleBezierArr.forEach(bezier => {
-  //     let p1 = [bezier.path[0][1], bezier.path[0][2]];
-  //     let cp1 = [bezier.path[1][1], bezier.path[1][2]];
-  //     let cp2 = [bezier.path[1][3], bezier.path[1][4]];
-  //     let p2 = [bezier.path[1][5], bezier.path[1][6]];
-  //     let newSingleBezier = new fabric.Path(`M ${p1[0]} ${p1[1]} C ${cp1[0]}, ${cp1[1]}, ${cp2[0]}, ${cp2[1]}, ${p2[0]}, ${p2[1]}`, {
-  //       fill: '',
-  //       stroke: 'red',
-  //       strokeWidth: 2 * range,
-  //       selectable: true,
-  //       hasBorders: true
-  //     });
-  //     canvas.add(newSingleBezier);
-  //   })
-  // })
+  }); 
 }
 // 计算贝兹曲线上的点的方法
 function getBezierPoints (t, p1, cp1, cp2, p2) {
@@ -79,17 +63,25 @@ function getBezierPoints (t, p1, cp1, cp2, p2) {
 }
 
 export function detectMouseMove (options, canvas) {
+  canvas.remove(detectC);
   let currentP = {
     x: options.e.offsetX,
     y: options.e.offsetY
   };
-  pointArr.forEach(pointObj => {
+  // TODO: 或者可以以鼠标为圆心画圆, 用圆与点做碰撞检测
+  pointArr.some(pointObj => {
     if (
-      currentP.x + range <= pointObj.posArr[0]
+      currentP.x + range >= pointObj.posArr[0]
       &&
-      currentP.x - range >= pointObj.posArr[0]
+      currentP.x - range <= pointObj.posArr[0]
+      &&
+      currentP.y + range >= pointObj.posArr[1]
+      &&
+      currentP.y - range <= pointObj.posArr[1]
     ) {
-      console.log(11);
+      detectC = makeDetectCircle(pointObj.posArr[0], pointObj.posArr[1]);
+      canvas.add(detectC);
+      return true;
     }
   });
 }
