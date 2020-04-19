@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import { fabric } from 'fabric'
+import { fabric } from 'fabric';
 import {
   mouseDown,
   mouseMove,
@@ -17,7 +17,7 @@ import {
   mouseOver,
   mouseOut,
   handleObjSelect
-} from './mouseEvent'
+} from './mouseEvent';
 // import { makeLine, makeCircle } from './line'
 
 export default {
@@ -25,32 +25,32 @@ export default {
     return {
       canvas: null,
       objArr: []
-    }
+    };
   },
   props: {
     barClickType: String,
     selectedColor: String
   },
   mounted () {
-    this.initFabric()
+    this.initFabric();
   },
   methods: {
     // 初始化fabric
     initFabric () {
-      this.setCanvasSize()
+      this.setCanvasSize();
       window.onresize = () => {
         this.canvas.forEachObject(obj => {
           this.objArr.push(obj);
-        })
-        this.setCanvasSize()
+        });
+        this.setCanvasSize();
         // TODO: resize重复画图
         this.objArr.forEach(obj => {
           this.canvas.add(obj);
-        })
+        });
         this.canvas.renderAll();
-      }
-      let that = this
-      fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center'
+      };
+      let that = this;
+      fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
       this.canvas.on({
         'mouse:down': options => mouseDown(options, that.barClickType, that.canvas),
         'mouse:move': options => mouseMove(options, that.barClickType, that.canvas),
@@ -60,33 +60,33 @@ export default {
         'mouse:out': e => mouseOut(e, that.barClickType),
         'selection:created': e => handleObjSelect(e, that.barClickType),
         'selection:updated': e => handleObjSelect(e, that.barClickType)
-      })
+      });
     },
     // 设置canvas元素的大小
     setCanvasSize () {
-      var Ccanvas = document.getElementById('c')
-      var container = document.querySelector('.canvasContainer')
-      let w = container.clientWidth - 20
-      let h = container.clientHeight - 20
-      Ccanvas.setAttribute('width', w)
-      Ccanvas.setAttribute('height', h)
+      var Ccanvas = document.getElementById('c');
+      var container = document.querySelector('.canvasContainer');
+      let w = container.clientWidth - 20;
+      let h = container.clientHeight - 20;
+      Ccanvas.setAttribute('width', w);
+      Ccanvas.setAttribute('height', h);
 
       var canvas = new fabric.Canvas('c', {
         width: w,
         height: h,
         selection: false,
         backgroundColor: '#555'
-      })
-      this.canvas = canvas
+      });
+      this.canvas = canvas;
     }
   },
   watch: {
     selectedColor: function (newVal) {
       // console.log(newVal)
-      getColor(newVal)
+      getColor(newVal);
     }
   }
-}
+};
 </script>
 
 <style lang="less" scoped>

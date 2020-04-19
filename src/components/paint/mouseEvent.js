@@ -9,13 +9,14 @@ import {
   moveControlPoint,
   delAnchor
 } from './bezier/bezierEvent';
+import { detectMouseMove } from './detect/detectEvent';
 import { getLength, setOpacity } from './tools';
 
 let startX, startY, endX, endY;
 
 // canvas 对象
 let c = null;
-let temLine = undefined;
+let temLine;
 // 长度文本设置  让它开始时不显示
 let lenText = 0;
 let startCircle = null;
@@ -25,7 +26,6 @@ let positionText = null;
 let color = '#fff';
 // 鼠标移入时的 线 原本的颜色
 let originColor;
-let isAlt = false;
 
 export function mouseDown (options, type, canvas) {
   c = canvas;
@@ -38,12 +38,15 @@ export function mouseDown (options, type, canvas) {
 }
 
 export function mouseMove (options, type, canvas) {
-  showMovePosition (options, canvas);
+  showMovePosition(options, canvas);
   if (type === 'line' || type === 'changeColor') {
-    drawLineMouseMove (options, canvas);
+    drawLineMouseMove(options, canvas);
   }
   if (type === 'bezier') {
     bezierMouseMove(options, color, canvas);
+  }
+  if (type === 'detect') {
+    detectMouseMove(options, canvas);
   }
 }
 
@@ -58,36 +61,36 @@ export function mouseUp (options, type, canvas) {
 
 export function ObjMoving (e, type) {
   if (type === 'select') {
-    let targetLine
-    let modifyLine
-    let anotherCircle
+    let targetLine;
+    let modifyLine;
+    let anotherCircle;
 
-    let p = e.target
-    p.line1 && p.line1.set({ 'x2': p.left, 'y2': p.top })
-    p.line2 && p.line2.set({ 'x1': p.left, 'y1': p.top })
+    let p = e.target;
+    p.line1 && p.line1.set({ 'x2': p.left, 'y2': p.top });
+    p.line2 && p.line2.set({ 'x1': p.left, 'y1': p.top });
 
-    if (p.line1) targetLine = p.line1
-    if (p.line2) targetLine = p.line2
-    if (p.line3) anotherCircle = p.line3
-    if (p.line4) anotherCircle = p.line4
+    if (p.line1) targetLine = p.line1;
+    if (p.line2) targetLine = p.line2;
+    if (p.line3) anotherCircle = p.line3;
+    if (p.line4) anotherCircle = p.line4;
 
-    modifyLine = Object.assign(targetLine, modifyLine)
+    modifyLine = Object.assign(targetLine, modifyLine);
 
-    let x1 = p.left
-    let y1 = p.top
-    let x2 = anotherCircle.left
-    let y2 = anotherCircle.top
-    let coords = [x1, y1, x2, y2]
-    let length = getLength(coords)
+    let x1 = p.left;
+    let y1 = p.top;
+    let x2 = anotherCircle.left;
+    let y2 = anotherCircle.top;
+    let coords = [x1, y1, x2, y2];
+    let length = getLength(coords);
     p.line5 && p.line5.set({
       'left': p.left + 12,
       'top': p.top + 12,
       'text': '长度：' + length
-    })
-    c.remove(targetLine)
-    c.add(modifyLine)
+    });
+    c.remove(targetLine);
+    c.add(modifyLine);
 
-    c.renderAll()
+    c.renderAll();
   }
   if (type === 'bezier') {
     moveControlPoint(e);
@@ -95,34 +98,41 @@ export function ObjMoving (e, type) {
 }
 
 export function mouseOver (e, type) {
-  let target = e.target
-  if (type === 'select') {
-    selectHoverHandler(target, '1', type)
-  }
-  if (type === 'delete') {
-    deleteHoverHandler(target, 'over')
-  }
-  if (type === 'bezier') {
-    bezierMouseOver(target)
+  let target = e.target;
+  switch (type) {
+    case 'select': {
+      selectHoverHandler(target, '1', type);
+      break;
+    }
+    case 'delete': {
+      deleteHoverHandler(target, 'over');
+      break;
+    }
+    case 'bezier': {
+      bezierMouseOver(target);
+      break;
+    }
+    default:
+      break;
   }
 }
 export function mouseOut (e, type) {
-  let target = e.target
+  let target = e.target;
   if (type === 'select') {
-    selectHoverHandler(target, '0', type)
+    selectHoverHandler(target, '0', type);
   }
   if (type === 'delete') {
-    deleteHoverHandler(target, 'out')
+    deleteHoverHandler(target, 'out');
   }
   if (type === 'bezier') {
-    bezierMouseOut(target)
+    bezierMouseOut(target);
   }
 }
 
 export function handleObjSelect (e, type) {
-  let delObj = e.target
+  let delObj = e.target;
   if (type === 'delete' && delObj.name === 'line') {
-    c.remove(delObj, delObj.lConCircle, delObj.rConCircle, delObj.flenText)
+    c.remove(delObj, delObj.lConCircle, delObj.rConCircle, delObj.flenText);
   }
   if (type === 'delete' && delObj.name === 'anchor') {
     delAnchor(delObj);
@@ -131,10 +141,10 @@ export function handleObjSelect (e, type) {
 
 // 显示鼠标的坐标值
 function showMovePosition (options, canvas) {
-  canvas.remove(positionText)
-  let e = options.e
-  let x = e.offsetX
-  let y = e.offsetY
+  canvas.remove(positionText);
+  let e = options.e;
+  let x = e.offsetX;
+  let y = e.offsetY;
   positionText = new fabric.Text(`x:${x},y:${y}`, {
     top: 0,
     left: 0,
@@ -145,26 +155,27 @@ function showMovePosition (options, canvas) {
     fontFamily: 'Arial',
     selectable: false,
     hasBorders: false
-  })
-  canvas.add(positionText)
+  });
+  positionText.name = 'positionText';
+  canvas.add(positionText);
 }
 
 // 选择时鼠标移入移出事件
 function selectHoverHandler (target, opaVal, type) {
   if (target) {
     if (target.name === 'controlCircle') {
-      let anotherCircle
-      if (target.line3) anotherCircle = target.line3
-      if (target.line4) anotherCircle = target.line4
+      let anotherCircle;
+      if (target.line3) anotherCircle = target.line3;
+      if (target.line4) anotherCircle = target.line4;
       target.set({
         selectable: true
-      })
-      setOpacity(target, opaVal, c)
+      });
+      setOpacity(target, opaVal, c);
       if (anotherCircle && target.line5) {
-        setOpacity(anotherCircle, opaVal, c)
-        setOpacity(target.line5, opaVal, c)
+        setOpacity(anotherCircle, opaVal, c);
+        setOpacity(target.line5, opaVal, c);
       }
-      c.renderAll()
+      c.renderAll();
     }
   }
 }
@@ -173,27 +184,27 @@ function selectHoverHandler (target, opaVal, type) {
 function deleteHoverHandler (target, type) {
   if (target) {
     if (type === 'over') {
-      originColor = target.get('stroke')
+      originColor = target.get('stroke');
       target.set({
         selectable: true,
         stroke: '#8e4483'
-      })
+      });
     }
     if (type === 'out') {
       target.set({
         selectable: true,
         stroke: originColor
-      })
+      });
     }
-    c.renderAll()
+    c.renderAll();
   }
 }
 
 // 画线的鼠标点击事件
 function drawLineMouseDown (options, type, canvas) {
   // console.log('鼠标点击时得到的color--- ' + color)
-  startX = options.e.offsetX
-  startY = options.e.offsetY
+  startX = options.e.offsetX;
+  startY = options.e.offsetY;
   // canvas.on('mouse:move', options => mouseMove(options, type, canvas))
 }
 
@@ -201,22 +212,22 @@ function drawLineMouseDown (options, type, canvas) {
 function drawLineMouseMove (options, canvas) {
   // 未点击的时候不让长度显示
   if (!startX) {
-    canvas.remove(lenText)
-    return
+    canvas.remove(lenText);
+    return;
   }
-  canvas.remove(temLine, lenText, startCircle, endCircle)
-  endX = options.e.offsetX
-  endY = options.e.offsetY
-  let coords = [startX, startY, endX, endY]
+  canvas.remove(temLine, lenText, startCircle, endCircle);
+  endX = options.e.offsetX;
+  endY = options.e.offsetY;
+  let coords = [startX, startY, endX, endY];
   // console.log(coords)
-  temLine = makeLine(coords, color)
+  temLine = makeLine(coords, color);
 
   // 开始点的小球
-  startCircle = makeCircle(startX, startY, null, temLine, endCircle, lenText)
+  startCircle = makeCircle(startX, startY, null, temLine, endCircle, lenText);
   // 终点坐标的小球
-  endCircle = makeCircle(endX, endY, temLine, null, startCircle, lenText)
+  endCircle = makeCircle(endX, endY, temLine, null, startCircle, lenText);
 
-  let length = getLength(coords)
+  let length = getLength(coords);
   lenText = new fabric.Text('长度：' + length, {
     top: endY + 12,
     left: endX + 12,
@@ -224,22 +235,22 @@ function drawLineMouseMove (options, canvas) {
     stroke: '#fff',
     fill: '#fff',
     selectable: false
-  })
+  });
 
-  canvas.add(temLine, lenText, startCircle, endCircle)
+  canvas.add(temLine, lenText, startCircle, endCircle);
 }
 
 // 画线的鼠标松开事件
 function drawLineMouseUp (options, canvas) {
   if (!endX && !endY) {
-    c.remove(temLine)
+    c.remove(temLine);
   }
   // c.off('mouse:move')
-  c.remove(temLine, lenText, startCircle, endCircle)
-  temLine = undefined
-  let coords = [startX, startY, endX, endY]
-  let line = makeLine(coords, color, null, null, null)
-  let length = getLength(coords)
+  c.remove(temLine, lenText, startCircle, endCircle);
+  temLine = undefined;
+  let coords = [startX, startY, endX, endY];
+  let line = makeLine(coords, color, null, null, null);
+  let length = getLength(coords);
   let text = new fabric.Text('长度：' + length, {
     top: endY + 12,
     left: endX + 12,
@@ -248,28 +259,28 @@ function drawLineMouseUp (options, canvas) {
     fill: '#fff',
     selectable: false,
     evented: false
-  })
+  });
   // 开始点的小球
   // let fStartCircle = makeCircle(startX, startY, null, line, null, text)
-  let fStartCircle = makeCircle(startX, startY, null, line, null, null, text)
+  let fStartCircle = makeCircle(startX, startY, null, line, null, null, text);
   // 终点坐标的小球
-  let fEndCircle = makeCircle(endX, endY, line, null, fStartCircle, null, text)
-  fStartCircle.line4 = fEndCircle
-  line.lConCircle = fStartCircle
-  line.rConCircle = fEndCircle
-  line.flenText = text
-  c.add(line, text, fStartCircle, fEndCircle)
-  setOpacity(text, '0', c)
-  setOpacity(fStartCircle, '0', c)
-  setOpacity(fEndCircle, 0, c)
-  endY = startY = endX = startX = undefined
+  let fEndCircle = makeCircle(endX, endY, line, null, fStartCircle, null, text);
+  fStartCircle.line4 = fEndCircle;
+  line.lConCircle = fStartCircle;
+  line.rConCircle = fEndCircle;
+  line.flenText = text;
+  c.add(line, text, fStartCircle, fEndCircle);
+  setOpacity(text, '0', c);
+  setOpacity(fStartCircle, '0', c);
+  setOpacity(fEndCircle, 0, c);
+  endY = startY = endX = startX = undefined;
 }
 
 // 获得颜色
 export function getColor (newColor) {
   // console.log('get color得到的---' + newColor)
   if (!getColor) {
-    color = 'white'
+    color = 'white';
   }
-  color = newColor
+  color = newColor;
 }

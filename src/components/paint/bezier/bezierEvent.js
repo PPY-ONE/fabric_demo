@@ -284,7 +284,7 @@ window.onkeydown = function (e) {
           selectable: true,
           evented: true
         });
-      })
+      });
       if (!bezierArr.length) return;
       isAlt = true;
       isAltArrVisiable();
@@ -305,7 +305,7 @@ window.onkeyup = function (e) {
 window.onblur = function () {
   isAlt = false;
   isAltArrVisiable();
-}
+};
 // ESC处理函数 重置所有状态
 function escHandler () {
   if (anchorArr.length < 2) return;
@@ -334,7 +334,7 @@ function escHandler () {
   // 将锚点数 组存放到整条贝兹曲线对象上
   bezierObj.anchorArr = anchorArr;
   // 将单个贝兹曲线的数组放入整条贝兹曲线的对象上
-  bezierObj.singleBezierArr = singleBezierArr; 
+  bezierObj.singleBezierArr = singleBezierArr;
   bezierArr.push(bezierObj);
   singleBezierArr = [];
   bezierObj = {};
@@ -395,7 +395,7 @@ function controlPointHandle (e) {
     x2: anotherCP.left,
     y2: anotherCP.top
   });
-  let newAnotherCP =Object.assign(anotherCP, {});
+  let newAnotherCP = Object.assign(anotherCP, {});
   c.remove(anotherCP).add(newAnotherCP);
   // 更新贝兹曲线
   bezierArr.some(bezier => {
@@ -423,7 +423,7 @@ function controlPointHandle (e) {
         hasControls: false,
         selectable: false,
         evented: false
-      })
+      });
       c.remove(preBezier);
       c.add(newPreBezier);
       modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
@@ -439,7 +439,7 @@ function controlPointHandle (e) {
       hasControls: false,
       selectable: false,
       evented: false
-    })
+    });
     let newNextBezier = new fabric.Path(`M ${anchor.left} ${anchor.top} C ${anotherCP.left}, ${anotherCP.top}, ${nextAn.preConP.left}, ${nextAn.preConP.top}, ${nextAn.left}, ${nextAn.top}`, {
       fill: '',
       stroke: '#fff',
@@ -447,7 +447,7 @@ function controlPointHandle (e) {
       hasControls: false,
       selectable: false,
       evented: false
-    })
+    });
     c.remove(preBezier, nextBezier);
     c.add(newNextBezier, newPreBezier);
     modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
@@ -460,7 +460,7 @@ function controlPointHandle (e) {
       hasControls: false,
       selectable: false,
       evented: false
-    })
+    });
     let newNextBezier = new fabric.Path(`M ${anchor.left} ${anchor.top} C ${target.left}, ${target.top}, ${nextAn.preConP.left}, ${nextAn.preConP.top}, ${nextAn.left}, ${nextAn.top}`, {
       fill: '',
       stroke: '#fff',
@@ -468,7 +468,7 @@ function controlPointHandle (e) {
       hasControls: false,
       selectable: false,
       evented: false
-    })
+    });
     c.remove(preBezier, nextBezier);
     c.add(newNextBezier, newPreBezier);
     modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
@@ -535,7 +535,7 @@ function anchorMovingHandle (e, clonePre, cloneNext) {
       hasControls: false,
       selectable: false,
       evented: false
-    })
+    });
     // TODO: 注意 这里把第一个锚点的 控制点 remove了
     c.remove(target.nextConP, target.preConP, nextBezier);
     c.add(newNextBezier);
@@ -583,7 +583,7 @@ function anchorMovingHandle (e, clonePre, cloneNext) {
     hasControls: false,
     selectable: false,
     evented: false
-  })
+  });
   c.remove(preBezier, nextBezier);
   c.add(newNextBezier, newPreBezier);
   modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;

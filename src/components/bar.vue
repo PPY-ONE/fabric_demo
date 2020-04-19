@@ -2,8 +2,9 @@
   <v-app-bar app>
     <div class="btnContainer">
       <v-btn class="barBtn" @click="barBtnClick('line')" color="#333">line</v-btn>
-      <v-btn class="barBtn" @click="barBtnClick('bezier')" color="#999">bezier</v-btn>
-      <v-btn class="barBtn" @click="barBtnClick('select')" color="#666">select</v-btn>
+      <v-btn class="barBtn" @click="barBtnClick('bezier')" color="#666">bezier</v-btn>
+      <v-btn class="barBtn" @click="barBtnClick('select')" color="#999">select</v-btn>
+      <v-btn class="barBtn" @click="barBtnClick('detect')" color="#bbb">detect</v-btn>
       <v-btn class="barBtn" @click="barBtnClick('delete')" color="#f00">delete</v-btn>
       <!-- 颜色选择按钮 -->
       <v-menu offset-y open-on-hover>
@@ -38,22 +39,22 @@ export default {
         { title: 'white' },
         { title: 'red' },
         { title: 'blue' },
-        { title: 'yellow' },
+        { title: 'yellow' }
       ]
-    }
+    };
   },
   methods: {
     barBtnClick (type) {
       // console.log(type)
-      this.$emit('sendClickType', type)
+      this.$emit('sendClickType', type);
     },
     selectColor (item) {
-      let color = item.title
-      let clickType = 'changeColor'
-      this.$emit('sendColor', color, clickType)
+      let color = item.title;
+      let clickType = 'changeColor';
+      this.$emit('sendColor', color, clickType);
     }
   }
-}
+};
 </script>
 
 <style lang="less" scoped>
