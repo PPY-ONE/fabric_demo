@@ -6,7 +6,8 @@ import {
   bezierMouseUp,
   bezierMouseOver,
   bezierMouseOut,
-  moveControlPoint
+  moveControlPoint,
+  delAnchor
 } from './bezier/bezierEvent';
 import { getLength, setOpacity } from './tools';
 
@@ -120,8 +121,11 @@ export function mouseOut (e, type) {
 
 export function handleObjSelect (e, type) {
   let delObj = e.target
-  if (type === 'delete' && delObj.name !== 'controlCircle') {
+  if (type === 'delete' && delObj.name === 'line') {
     c.remove(delObj, delObj.lConCircle, delObj.rConCircle, delObj.flenText)
+  }
+  if (type === 'delete' && delObj.name === 'anchor') {
+    delAnchor(delObj);
   }
 }
 

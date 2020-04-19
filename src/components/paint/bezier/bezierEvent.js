@@ -589,6 +589,59 @@ function anchorMovingHandle (e, clonePre, cloneNext) {
   modBezier.singleBezierArr[modAnIndex - 1] = newPreBezier;
   modBezier.singleBezierArr[modAnIndex] = newNextBezier;
 }
+// 删除锚点
+export function delAnchor (delAnchor) {
+  let targetBezier;
+  let delIndex;
+  bezierArr.some(bezier => {
+    if (delAnchor.bezierId === bezier.id) {
+      targetBezier = bezier;
+      return true;
+    }
+  });
+  targetBezier.anchorArr.some((item, i) => {
+    if (delAnchor.id === item.id) {
+      delIndex = i;
+      return true;
+    }
+  });
+  targetBezier.anchorArr[0].set({
+    selectable: true,
+    evented: true
+  });
+  // 如果删除的是 第一个锚点
+  if (delIndex === 0) {
+    c.remove(delAnchor, targetBezier.singleBezierArr[0]);
+    targetBezier.anchorArr.shift();
+    targetBezier.singleBezierArr.shift();
+    return;
+  }
+  // 如果删除的是最后一个锚点
+  if (delIndex === targetBezier.anchorArr.length - 1) {
+    c.remove(delAnchor, targetBezier.singleBezierArr[targetBezier.singleBezierArr.length - 1]);
+    targetBezier.anchorArr.pop();
+    targetBezier.singleBezierArr.pop();
+    return;
+  }
+  let preAn = targetBezier.anchorArr[delIndex - 1];
+  let nextAn = targetBezier.anchorArr[delIndex + 1];
+  let preBezier = targetBezier.singleBezierArr[delIndex - 1];
+  let nextBezier = targetBezier.singleBezierArr[delIndex];
+  let newBezier = new fabric.Path(`M ${preAn.left} ${preAn.top} C ${preAn.nextConP.left}, ${preAn.nextConP.top}, ${nextAn.preConP.left}, ${nextAn.preConP.top}, ${nextAn.left}, ${nextAn.top}`, {
+    fill: '',
+    stroke: '#fff',
+    hasBorders: false,
+    hasControls: false,
+    evented: false,
+    selectable: false
+  });
+  c.remove(preBezier, nextBezier, delAnchor);
+  c.add(newBezier);
+  // 更新贝兹曲线数组 和 锚点数组
+  targetBezier.singleBezierArr.splice(delIndex - 1, 2);
+  targetBezier.singleBezierArr.splice(delIndex - 1, 0, newBezier);
+  targetBezier.anchorArr.splice(delIndex, 1);
+}
 // TODO: 调整控制点和锚点的时候 不连续 会断开
 // 这里把前后的两条贝兹曲线重画来解决。 感觉并不是最优解
 // 可能是hasborder 的 影响 但是 hasborder已经设置为false了。
