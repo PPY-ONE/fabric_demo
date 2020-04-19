@@ -7,9 +7,9 @@ import {
   bezierMouseOver,
   bezierMouseOut,
   moveControlPoint,
-  delAnchor
+  delAnchor,
 } from './bezier/bezierEvent';
-import { detectMouseMove } from './detect/detectEvent';
+import { detectMouseMove, detectMouseOver } from './detect/detectEvent';
 import { getLength, setOpacity } from './tools';
 
 let startX, startY, endX, endY;
@@ -110,6 +110,10 @@ export function mouseOver (e, type) {
     }
     case 'bezier': {
       bezierMouseOver(target);
+      break;
+    }
+    case 'detect': {
+      detectMouseOver(target);
       break;
     }
     default:

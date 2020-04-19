@@ -18,13 +18,15 @@ import {
   mouseOut,
   handleObjSelect
 } from './mouseEvent';
-// import { makeLine, makeCircle } from './line'
+import { bezierArr } from './bezier/bezierEvent';
+import { getBezierData } from './detect/detectEvent'
 
 export default {
   data () {
     return {
       canvas: null,
-      objArr: []
+      objArr: [],
+      bezierArr: bezierArr
     };
   },
   props: {
@@ -84,6 +86,9 @@ export default {
     selectedColor: function (newVal) {
       // console.log(newVal)
       getColor(newVal);
+    },
+    bezierArr: function (newVal) {
+      getBezierData(newVal);
     }
   }
 };

@@ -136,7 +136,10 @@ export function bezierMouseUp (options, color, canvas) {
     setOpacity(controlL, '0', canvas);
   }
   // 把每一次的三阶贝兹曲线存进数组
-  if (temBezier) singleBezierArr.push(temBezier);
+  if (temBezier) {
+    temBezier.singleId = 'bezier' + bezierArr.length + 'single' + singleBezierArr.length;
+    singleBezierArr.push(temBezier);
+  }
   if (!isMouseMove && temPath) {
     canvas.add(temPath);
     canvas.remove(temBezier);
@@ -326,7 +329,7 @@ function escHandler () {
   visiableAnchor = [];
   visiableArr = [];
   // 整条贝兹曲线的id
-  bezierObj.id = bezierArr.length + 1;
+  bezierObj.id = bezierArr.length;
   // 为每个锚点绑定所在整条贝兹曲线的id
   anchorArr.forEach(obj => {
     obj.bezierId = bezierObj.id;
@@ -645,3 +648,5 @@ export function delAnchor (delAnchor) {
 // TODO: 调整控制点和锚点的时候 不连续 会断开
 // 这里把前后的两条贝兹曲线重画来解决。 感觉并不是最优解
 // 可能是hasborder 的 影响 但是 hasborder已经设置为false了。
+
+export { bezierArr };
